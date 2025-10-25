@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "xoroshiro128plus.h"
+
 // lua util
 
 static void *check_pointer(lua_State *L, int n){
@@ -75,7 +77,7 @@ static void set_bool_field(lua_State *L, int n, const char *name, bool value) {
 
 // dsp
 
-#define SAMPLE_RATE 44100
+#define SAMPLE_RATE 44100.0
 
 static int l_get_sample_rate(lua_State *L) {
   lua_pushnumber(L, SAMPLE_RATE);
@@ -314,10 +316,96 @@ static int l_stereo_interleave(lua_State *L) {
   return 0;
 }
 
+static int l_delay_writer(lua_State *L) {
+  int sample_count = check_number_field(L, 1, "sample_count");
+  float *buffer = check_pointer_field(L, 1, "buffer");
+  int buffer_size = check_number_field(L, 1, "buffer_size");
+  int write_index = check_number_field(L, 1, "write_index");
+  float *input = check_pointer_field(L, 1, "input");
+
+  for (int s = 0; s < sample_count; s++) {
+    buffer[write_index] = input[s];
+    write_index = (write_index + 1) % buffer_size;
+  }
+
+  set_number_field(L, 1, "write_index", write_index);
+  return 0;
+}
+
+static int l_delay_reader(lua_State *L) {
+  int sample_count = check_number_field(L, 1, "sample_count");
+  float *buffer = check_pointer_field(L, 1, "buffer");
+  int buffer_size = check_integer_field(L, 1, "buffer_size");
+  int read_index = check_integer_field(L, 1, "read_index");
+  int min_delay_samples = check_integer_field(L, 1, "min_delay_samples");
+  int max_delay_samples = check_integer_field(L, 1, "max_delay_samples");
+  float *output = check_pointer_field(L, 1, "output");
+  float *input_delay_time = check_pointer_field(L, 1, "input_delay_time");
+
+  for (int s = 0; s < sample_count; s++) {
+    float delay_time = input_delay_time[s];
+    int delay_samples = max(min_delay_samples, min(max_delay_samples, (int)floor(delay_time * SAMPLE_RATE + 0.5)));
+    int index = (read_index - delay_samples + buffer_size) % buffer_size;
+    output[s] = buffer[index];
+    read_index++;
+  }
+
+  // note: do not write back read_index
+
+  return 0;
+}
+
+static double random_double() {
+  return (next() >> 11) * 0x1.0p-53;
+}
+
+static int l_white_noise(lua_State *L) {
+  int sample_count = check_number_field(L, 1, "sample_count");
+  float *output = check_pointer_field(L, 1, "output");
+
+  for (int s = 0; s < sample_count; s++) {
+    output[s] = random_double() * 2 - 1;
+  }
+
+  return 0;
+}
+
+static int l_pink_noise(lua_State *L) {
+  int sample_count = check_number_field(L, 1, "sample_count");
+  float *output = check_pointer_field(L, 1, "output");
+  double b0 = opt_number_field(L, 1, "b0", 0);
+  double b1 = opt_number_field(L, 1, "b1", 0);
+  double b2 = opt_number_field(L, 1, "b2", 0);
+  double b3 = opt_number_field(L, 1, "b3", 0);
+  double b4 = opt_number_field(L, 1, "b4", 0);
+  double b5 = opt_number_field(L, 1, "b5", 0);
+  double b6 = opt_number_field(L, 1, "b6", 0);
+
+  for (int s = 0; s < sample_count; s++) {
+    float white = random_double() * 2 - 1;
+    b0 = 0.99886f * b0 + white * 0.0555179f;
+    b1 = 0.99332f * b1 + white * 0.0750759f;
+    b2 = 0.96900f * b2 + white * 0.1538520f;
+    b3 = 0.86650f * b3 + white * 0.3104856f;
+    b4 = 0.55000f * b4 + white * 0.5329522f;
+    b5 = -0.7616f * b5 - white * 0.0168980f;
+    output[s] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362f;
+    b6 = white * 0.115926f;
+  }
+
+  set_number_field(L, 1, "b0", b0);
+  set_number_field(L, 1, "b1", b1);
+  set_number_field(L, 1, "b2", b2);
+  set_number_field(L, 1, "b3", b3);
+  set_number_field(L, 1, "b4", b4);
+  set_number_field(L, 1, "b5", b5);
+  set_number_field(L, 1, "b6", b6);
+
+  return 0;
+}
+
 static const luaL_Reg dsp_module[] = {
   { "get_sample_rate", l_get_sample_rate },
-  //{ "set_block_samples", l_set_block_samples },
-  //{ "get_block_samples", l_get_block_samples },
   { "set", l_set },
   { "add", l_add },
   { "multiply", l_multiply },
@@ -327,10 +415,10 @@ static const luaL_Reg dsp_module[] = {
   { "adsr", l_adsr },
   { "stereo_limiter", l_stereo_limiter },
   { "stereo_interleave", l_stereo_interleave },
-  // TODO: delay_buffer
-  // TODO: delay_writer
-  // TODO: delay_reader
-  // TODO: pink_noise
+  { "delay_writer", l_delay_writer },
+  { "delay_reader", l_delay_reader },
+  { "white_noise", l_white_noise },
+  { "pink_noise", l_pink_noise },
   { NULL, NULL }
 };
 

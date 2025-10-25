@@ -74,3 +74,39 @@ export function stereo_interleave(state: {
   input_left: LuaUserdata
   input_right: LuaUserdata
 }): void
+
+export function delay_writer(state: {
+  sample_count: number
+  buffer: LuaUserdata
+  buffer_size: number
+  write_index: number
+  input: LuaUserdata
+}): void
+
+export function delay_reader(state: {
+  sample_count: number
+  buffer: LuaUserdata
+  buffer_size: number
+  read_index: number
+  min_delay_samples: number
+  max_delay_samples: number
+  output: LuaUserdata
+  input_delay_time: LuaUserdata
+}): void
+
+export function white_noise(state: {
+  sample_count: number
+  output: LuaUserdata
+}): void
+
+export function pink_noise(state: {
+  sample_count: number
+  output: LuaUserdata
+  b0?: number
+  b1?: number
+  b2?: number
+  b3?: number
+  b4?: number
+  b5?: number
+  b6?: number
+}): void
