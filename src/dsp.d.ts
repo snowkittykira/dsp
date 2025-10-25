@@ -1,8 +1,6 @@
 /** @noSelfInFile **/
 
 export function get_sample_rate(): number
-export function get_block_samples(): number
-export function set_block_samples(block_samples: number): void
 
 export function set(state: {
   sample_count: number
