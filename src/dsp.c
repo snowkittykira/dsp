@@ -41,7 +41,7 @@ static double check_number_field(lua_State *L, int n, const char *name) {
 
 static int check_integer_field(lua_State *L, int n, const char *name) {
   lua_getfield(L, n, name);
-  double number = luaL_checkinteger(L, -1);
+  int number = luaL_checkinteger(L, -1);
   lua_pop(L, 1);
   return number;
 }
@@ -85,7 +85,7 @@ static int l_get_sample_rate(lua_State *L) {
 }
 
 static int l_set(lua_State *L){
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *output = check_pointer_field(L, 1, "output");
   float value = check_number_field(L, 1, "value");
   for (int s = 0; s < sample_count; s++) {
@@ -95,7 +95,7 @@ static int l_set(lua_State *L){
 }
 
 static int l_add(lua_State *L){
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *output = check_pointer_field(L, 1, "output");
   memset(output, 0, sample_count * sizeof(float));
   lua_getfield(L, 1, "inputs");
@@ -110,7 +110,7 @@ static int l_add(lua_State *L){
 }
 
 static int l_multiply(lua_State *L){
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *output = check_pointer_field(L, 1, "output");
   for (int s = 0; s < sample_count; s++) {
     output[s] = 1;
@@ -142,14 +142,16 @@ static float maxf(float a, float b) {
   return a > b ? a : b;
 }
 
+#define PI 3.14159265358979323846
+
 static float calculate_filter_coefficient(float cutoff_frequency) {
-  float wc = 2 * M_PI * maxf(0, minf(0.5, cutoff_frequency / SAMPLE_RATE));
+  float wc = 2 * PI * maxf(0, minf(0.5, cutoff_frequency / SAMPLE_RATE));
   float y = 1 - cosf(wc);
   return -y + sqrtf(y * (y + 2));
 }
 
 static int l_lowpass(lua_State *L) {
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *output = check_pointer_field(L, 1, "output");
   float *input = check_pointer_field(L, 1, "input");
   float *input_cutoff = check_pointer_field(L, 1, "input_cutoff");
@@ -167,7 +169,7 @@ static int l_lowpass(lua_State *L) {
 }
 
 static int l_highpass(lua_State *L) {
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *output = check_pointer_field(L, 1, "output");
   float *input = check_pointer_field(L, 1, "input");
   float *input_cutoff = check_pointer_field(L, 1, "input_cutoff");
@@ -185,7 +187,7 @@ static int l_highpass(lua_State *L) {
 }
 
 static int l_triangle(lua_State *L) {
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *output = check_pointer_field(L, 1, "output");
   float *input_frequency = check_pointer_field(L, 1, "input_frequency");
   float *input_duty = check_pointer_field(L, 1, "input_duty");
@@ -216,7 +218,7 @@ enum {
 };
 
 static int l_adsr(lua_State *L) {
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *output = check_pointer_field(L, 1, "output");
   float *input_gate = check_pointer_field(L, 1, "input_gate");
   double attack = check_number_field(L, 1, "attack");
@@ -277,7 +279,7 @@ static int l_adsr(lua_State *L) {
 }
 
 static int l_stereo_limiter(lua_State *L) {
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *output_left = check_pointer_field(L, 1, "output_left");
   float *output_right = check_pointer_field(L, 1, "output_right");
   float *input_left = check_pointer_field(L, 1, "input_left");
@@ -303,7 +305,7 @@ static int l_stereo_limiter(lua_State *L) {
 }
 
 static int l_stereo_interleave(lua_State *L) {
-  int sample_count = check_number_field(L, 1, "sample_count"); // number of stereo frames to output
+  int sample_count = check_integer_field(L, 1, "sample_count"); // number of stereo frames to output
   float *output_stereo = check_pointer_field(L, 1, "output_stereo");
   float *input_left = check_pointer_field(L, 1, "input_left");
   float *input_right = check_pointer_field(L, 1, "input_right");
@@ -317,7 +319,7 @@ static int l_stereo_interleave(lua_State *L) {
 }
 
 static int l_delay_writer(lua_State *L) {
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *buffer = check_pointer_field(L, 1, "buffer");
   int buffer_size = check_number_field(L, 1, "buffer_size");
   int write_index = check_number_field(L, 1, "write_index");
@@ -333,7 +335,7 @@ static int l_delay_writer(lua_State *L) {
 }
 
 static int l_delay_reader(lua_State *L) {
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *buffer = check_pointer_field(L, 1, "buffer");
   int buffer_size = check_integer_field(L, 1, "buffer_size");
   int read_index = check_integer_field(L, 1, "read_index");
@@ -360,7 +362,7 @@ static double random_double() {
 }
 
 static int l_white_noise(lua_State *L) {
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *output = check_pointer_field(L, 1, "output");
 
   for (int s = 0; s < sample_count; s++) {
@@ -371,7 +373,7 @@ static int l_white_noise(lua_State *L) {
 }
 
 static int l_pink_noise(lua_State *L) {
-  int sample_count = check_number_field(L, 1, "sample_count");
+  int sample_count = check_integer_field(L, 1, "sample_count");
   float *output = check_pointer_field(L, 1, "output");
   double b0 = opt_number_field(L, 1, "b0", 0);
   double b1 = opt_number_field(L, 1, "b1", 0);
