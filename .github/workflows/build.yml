@@ -17,4 +17,4 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: dsp.so
+          path: dsp.so
