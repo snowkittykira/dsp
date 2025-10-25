@@ -1,0 +1,20 @@
+name: Build
+on:
+  push:
+jobs:
+  build-project:
+    name: Build Project
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4.2.2
+        with:
+          submodules: 'recursive'
+      - name: Configure
+        run: cmake -B build
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsp.so
