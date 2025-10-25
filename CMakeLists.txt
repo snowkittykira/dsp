@@ -5,9 +5,7 @@ project(dsp)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # executable
-add_library(dsp)
-target_sources(dsp
-  PRIVATE
+add_library(dsp
+  SHARED
     src/dsp.c)
-
 target_include_directories(dsp PRIVATE deps/lua)
