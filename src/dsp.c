@@ -142,6 +142,14 @@ static float maxf(float a, float b) {
   return a > b ? a : b;
 }
 
+static int mini(int a, int b) {
+  return a < b ? a : b;
+}
+
+static int maxi(int a, int b) {
+  return a > b ? a : b;
+}
+
 #define PI 3.14159265358979323846
 
 static float calculate_filter_coefficient(float cutoff_frequency) {
@@ -321,8 +329,8 @@ static int l_stereo_interleave(lua_State *L) {
 static int l_delay_writer(lua_State *L) {
   int sample_count = check_integer_field(L, 1, "sample_count");
   float *buffer = check_pointer_field(L, 1, "buffer");
-  int buffer_size = check_number_field(L, 1, "buffer_size");
-  int write_index = check_number_field(L, 1, "write_index");
+  int buffer_size = check_integer_field(L, 1, "buffer_size");
+  int write_index = check_integer_field(L, 1, "write_index");
   float *input = check_pointer_field(L, 1, "input");
 
   for (int s = 0; s < sample_count; s++) {
@@ -346,7 +354,7 @@ static int l_delay_reader(lua_State *L) {
 
   for (int s = 0; s < sample_count; s++) {
     float delay_time = input_delay_time[s];
-    int delay_samples = max(min_delay_samples, min(max_delay_samples, (int)floor(delay_time * SAMPLE_RATE + 0.5)));
+    int delay_samples = maxi(min_delay_samples, mini(max_delay_samples, (int)floor(delay_time * SAMPLE_RATE + 0.5)));
     int index = (read_index - delay_samples + buffer_size) % buffer_size;
     output[s] = buffer[index];
     read_index++;
