@@ -18,7 +18,7 @@
   },
   "tstl": {
     "luaTarget": "JIT",
-    "noResolvePaths": ["dsp"],
+    "noResolvePaths": ["dsp_c"],
     "sourceMapTraceback": true
   }
 }

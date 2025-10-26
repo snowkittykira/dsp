@@ -8,7 +8,7 @@ lovr.load = () => {
       thread = require 'lovr.thread',
       timer = require 'lovr.timer',
     }
-    require 'synth'
+    require 'audio.thread'
   `)
   thread.start()
 }

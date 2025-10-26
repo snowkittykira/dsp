@@ -414,7 +414,7 @@ static int l_pink_noise(lua_State *L) {
   return 0;
 }
 
-static const luaL_Reg dsp_module[] = {
+static const luaL_Reg dsp_c_module[] = {
   { "get_sample_rate", l_get_sample_rate },
   { "set", l_set },
   { "add", l_add },
@@ -432,8 +432,8 @@ static const luaL_Reg dsp_module[] = {
   { NULL, NULL }
 };
 
-int luaopen_dsp(lua_State* L) {
+int luaopen_dsp_c(lua_State* L) {
   lua_newtable(L);
-  luaL_register(L, NULL, dsp_module);
+  luaL_register(L, NULL, dsp_c_module);
   return 1;
 }
