@@ -10,7 +10,6 @@ const start = () => {
   }
 }
 
-
 //// construct audio graph ///////////////////////
 
 const tri = dsp.triangle(dsp.new_stream(220), dsp.new_stream(0.5))

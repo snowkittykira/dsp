@@ -43,8 +43,25 @@ export const schedule = (fn: () => void) => {
   scheduled_functions.push(fn)
 }
 
-export const process_scheduled = () => {
+const process_scheduled = () => {
   for (let fn of scheduled_functions) {
+    fn()
+  }
+}
+
+//// steps ///////////////////////////////////////
+
+let step_phase = 0
+let step_duration = 0.25
+
+const step_functions: (() => void)[] = []
+
+export const schedule_on_step = (fn: () => void) => {
+  step_functions.push(fn)
+}
+
+const on_step = () => {
+  for (let fn of step_functions) {
     fn()
   }
 }
@@ -66,21 +83,42 @@ const output_blob = lovr.data.newBlob(2 * sizeof_sample * max_block_size, 'outpu
 export const process_if_needed = () => {
   // check sound
   while (output_sound.getCapacity() >= 512) {
-    // determine block size
-    current_block_size = math.min (max_block_size, output_sound.getCapacity())
-    // run all nodes
-    process_scheduled()
-    // interleave
-    dsp_c.stereo_interleave({
-      sample_count: current_block_size,
-      output_stereo: output_blob.getPointer(),
-      input_left: main_output[0],
-      input_right: main_output[1]
-    })
-    output_sound.setFrames(output_blob, current_block_size)
-    if (!output_source.isPlaying()) {
-      output_source.play()
+    let samples_to_render = math.min (max_block_size, output_sound.getCapacity())
+    while (samples_to_render > 0) {
+      // determine block size
+      const samples_until_step = math.ceil((1 - step_phase) * step_duration * sample_rate)
+      const samples_in_segment = math.min(samples_to_render, samples_until_step)
+      // process
+      process_samples(samples_in_segment)
+      // update times
+      samples_to_render -= samples_in_segment
+      step_phase += samples_in_segment / sample_rate / step_duration
+
+      // do step if necessary
+      if (samples_until_step == samples_in_segment) {
+        step_phase -= 1
+        on_step()
+      }
     }
+  }
+}
+
+export const process_samples = (samples: number) => {
+  print(samples)
+  // set block size
+  current_block_size = samples;
+  // run all nodes
+  process_scheduled()
+  // interleave
+  dsp_c.stereo_interleave({
+    sample_count: current_block_size,
+    output_stereo: output_blob.getPointer(),
+    input_left: main_output[0],
+    input_right: main_output[1]
+  })
+  output_sound.setFrames(output_blob, current_block_size)
+  if (!output_source.isPlaying()) {
+    output_source.play()
   }
 }
 
